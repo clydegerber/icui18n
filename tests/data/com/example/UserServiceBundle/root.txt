@@ -1,0 +1,4 @@
+// Root bundle for UserService — overrides greeting only; farewell falls back to ServiceBundle.
+root {
+    greeting { "Welcome, user" }
+}

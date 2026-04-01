@@ -1,0 +1,9 @@
+// Root bundle for Service — serves as the fallback for all locales.
+root {
+    greeting { "Hello" }
+    farewell  { "Goodbye" }
+    errors {
+        not_found { "Not found" }
+        forbidden { "Forbidden" }
+    }
+}

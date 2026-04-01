@@ -1,0 +1,4 @@
+// French locale for UserService.
+fr {
+    greeting { "Bienvenue, utilisateur" }
+}

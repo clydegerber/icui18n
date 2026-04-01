@@ -3,13 +3,15 @@
 #include <concepts>
 #include <string_view>
 
-namespace icui18n {
+namespace icui18n
+{
 
-namespace detail { class LocalizableBase; }
+class Localizable;
 
 // Satisfied when T declares:  static constexpr std::string_view bundle_name
 template<typename T>
-concept HasBundleName = requires {
+concept HasBundleName = requires
+{
     { T::bundle_name } -> std::convertible_to<std::string_view>;
 };
 
@@ -17,7 +19,8 @@ concept HasBundleName = requires {
 // Derived classes that do not redeclare bundle_root inherit it from their
 // base class via normal static-member lookup.
 template<typename T>
-concept HasBundleRoot = requires {
+concept HasBundleRoot = requires
+{
     { T::bundle_root } -> std::convertible_to<std::string_view>;
 };
 
@@ -25,11 +28,11 @@ concept HasBundleRoot = requires {
 template<typename T>
 concept LocalizableClass = HasBundleName<T> && HasBundleRoot<T>;
 
-// Valid as the Parent parameter of Localizable<Self, Parent>:
-// either void (root of a hierarchy) or a type that derives from LocalizableBase.
+// Valid as the Parent parameter of LocalizableFor<Self, Parent>:
+// either void (root of a hierarchy) or a type that derives from Localizable.
 template<typename T>
-concept IsLocalizableBase =
+concept IsLocalizable =
     std::is_void_v<T> ||
-    std::derived_from<T, detail::LocalizableBase>;
+    std::derived_from<T, Localizable>;
 
 } // namespace icui18n
