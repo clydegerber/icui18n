@@ -1,6 +1,6 @@
 # icui18n
 
-[![CI](https://github.com/YOUR_USERNAME/icui18n/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/icui18n/actions/workflows/ci.yml)
+[![CI](https://github.com/clydegerber/icui18n/actions/workflows/ci.yml/badge.svg)](https://github.com/clydegerber/icui18n/actions/workflows/ci.yml)
 
 A C++20 library that layers polymorphic resource inheritance and locale-change events on top of ICU's `ResourceBundle` API.
 
@@ -27,7 +27,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     icui18n
-    GIT_REPOSITORY https://github.com/YOUR_USERNAME/icui18n.git
+    GIT_REPOSITORY https://github.com/clydegerber/icui18n.git
     GIT_TAG        v1.0.0
 )
 FetchContent_MakeAvailable(icui18n)
