@@ -1,0 +1,4 @@
+// French locale for ExtService.
+fr {
+    greeting { "Bonjour d ExtService" }
+}

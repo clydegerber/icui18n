@@ -23,6 +23,10 @@ set(BUNDLE_SOURCES
     data/com/example/ServiceBundle/fr.txt
     data/com/example/UserServiceBundle/root.txt
     data/com/example/UserServiceBundle/fr.txt
+    # ExtServiceBundle lives under a separate subdirectory to simulate a
+    # cross-library subclass that owns its own bundle root.
+    data/ext/com/ext/ExtServiceBundle/root.txt
+    data/ext/com/ext/ExtServiceBundle/fr.txt
 )
 
 set(BUNDLE_OUTPUTS)

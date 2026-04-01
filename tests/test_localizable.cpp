@@ -23,11 +23,24 @@ public:
 };
 
 // UserService overrides "greeting"; "farewell" falls back to ServiceBundle.
-// bundle_root is inherited from Service via static-member lookup.
+// bundle_root is NOT redeclared: it is inherited from Service, so both bundles
+// live in the same TEST_DATA_DIR root directory.
 class UserService : public icui18n::LocalizableFor<UserService, Service>
 {
 public:
     static constexpr std::string_view bundle_name = "com/example/UserServiceBundle";
+};
+
+// ExtService also extends Service but redeclares bundle_root to point to a
+// separate directory (TEST_DATA_DIR "/ext"), modelling a cross-library
+// subclass whose bundles are stored independently from the parent library.
+// Only "greeting" is defined in ExtServiceBundle; "farewell" falls back to
+// ServiceBundle in the parent root.
+class ExtService : public icui18n::LocalizableFor<ExtService, Service>
+{
+public:
+    static constexpr std::string_view bundle_root = TEST_DATA_DIR "/ext";
+    static constexpr std::string_view bundle_name = "com/ext/ExtServiceBundle";
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -39,6 +52,8 @@ static std::string str(const icu::UnicodeString& us)
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
+
+// ── Service (single bundle) ───────────────────────────────────────────────────
 
 void test_service_loads_greeting()
 {
@@ -59,6 +74,11 @@ void test_service_loads_farewell()
     assert(str(*val) == "Goodbye");
     std::cout << "PASS  test_service_loads_farewell\n";
 }
+
+// ── Shared bundle root (UserService) ─────────────────────────────────────────
+// UserService does not redeclare bundle_root, so its bundle is loaded from
+// the same root directory as Service's bundle.  The two .res files coexist
+// in that directory and are each loaded into their own chain node.
 
 // UserService defines its own "greeting" — should take precedence.
 void test_userservice_overrides_greeting()
@@ -116,6 +136,53 @@ void test_missing_key_returns_nullopt()
     assert(!val.has_value());
     std::cout << "PASS  test_missing_key_returns_nullopt\n";
 }
+
+// ── Own bundle root (ExtService) ──────────────────────────────────────────────
+// ExtService redeclares bundle_root to TEST_DATA_DIR "/ext", a directory
+// separate from Service's TEST_DATA_DIR root.  This models a cross-library
+// subclass that ships and installs its bundles independently.
+
+// ExtService's own key is found in its bundle under the separate root.
+void test_own_root_loads_from_separate_directory()
+{
+    ExtService svc;
+    svc.setBundleLocale(icu::Locale::getEnglish());
+    auto val = svc.getString("greeting");
+    assert(val.has_value());
+    assert(str(*val) == "Hello from ExtService");
+    std::cout << "PASS  test_own_root_loads_from_separate_directory\n";
+}
+
+// A key absent from ExtServiceBundle falls back to ServiceBundle, which lives
+// in a different root directory — fallback crosses bundle root boundaries.
+void test_own_root_falls_back_to_parent_bundle()
+{
+    ExtService svc;
+    svc.setBundleLocale(icu::Locale::getEnglish());
+    auto val = svc.getString("farewell");
+    assert(val.has_value());
+    assert(str(*val) == "Goodbye");
+    std::cout << "PASS  test_own_root_falls_back_to_parent_bundle\n";
+}
+
+// A locale change must reload both the child's bundle (separate root) and
+// the parent's bundle (parent root) so that all keys reflect the new locale.
+void test_own_root_locale_change_reloads_both_roots()
+{
+    ExtService svc;
+    svc.setBundleLocale(icu::Locale::getEnglish());
+    assert(str(*svc.getString("greeting")) == "Hello from ExtService");
+    assert(str(*svc.getString("farewell"))  == "Goodbye");
+
+    svc.setBundleLocale(icu::Locale::getFrench());
+    // Own bundle (separate root) reloaded at French locale.
+    assert(str(*svc.getString("greeting")) == "Bonjour d ExtService");
+    // Parent bundle (parent root) also reloaded; fallback key is now French.
+    assert(str(*svc.getString("farewell"))  == "Au revoir");
+    std::cout << "PASS  test_own_root_locale_change_reloads_both_roots\n";
+}
+
+// ── Locale listeners / copy / move ───────────────────────────────────────────
 
 void test_locale_listener_fires_on_change()
 {
@@ -252,6 +319,9 @@ int main()
     test_locale_change_reloads_bundle();
     test_userservice_locale_change();
     test_missing_key_returns_nullopt();
+    test_own_root_loads_from_separate_directory();
+    test_own_root_falls_back_to_parent_bundle();
+    test_own_root_locale_change_reloads_both_roots();
     test_locale_listener_fires_on_change();
     test_subscription_cancels_on_destruction();
     test_copy_has_same_locale_and_bundle();

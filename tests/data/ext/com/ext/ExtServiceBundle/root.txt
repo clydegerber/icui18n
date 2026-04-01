@@ -1,0 +1,6 @@
+// Root bundle for ExtService — lives in a separate bundle root from Service,
+// modelling a cross-library subclass that owns its own bundle directory.
+// Only "greeting" is defined here; "farewell" falls back to ServiceBundle.
+root {
+    greeting { "Hello from ExtService" }
+}
