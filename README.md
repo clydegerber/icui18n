@@ -90,12 +90,27 @@ A subclass that adds its own bundle inherits from `LocalizableFor<Self, Parent>`
 class UserService : public icui18n::LocalizableFor<UserService, Service>
 {
 public:
-    // bundle_root is inherited from Service via static-member lookup
+    // bundle_root not redeclared: inherited from Service, so UserService's
+    // bundle is stored alongside Service's under the same root directory.
     static constexpr std::string_view bundle_name = "com/example/UserServiceBundle";
 };
 ```
 
 Key lookup checks `UserServiceBundle` first, then falls back to `ServiceBundle`.
+
+**Cross-library subclasses** should redeclare `bundle_root` so their bundles are stored under their own library's install path rather than the parent library's:
+
+```cpp
+// In a separate library — extends Service but owns its bundle location
+class ExtService : public icui18n::LocalizableFor<ExtService, Service>
+{
+public:
+    static constexpr std::string_view bundle_root = "/usr/lib/ext/i18n";
+    static constexpr std::string_view bundle_name = "com/ext/ExtServiceBundle";
+};
+```
+
+`bundle_root` is resolved by static member lookup starting from `Self`, so redeclaring it in the subclass always takes precedence over the inherited value.
 
 ### 3. Read values
 

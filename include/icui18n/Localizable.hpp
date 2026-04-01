@@ -237,13 +237,29 @@ public:
 // always already complete at the point LocalizableFor<Self, Parent> is
 // instantiated.
 //
-// Example:
-//   class UserService : public icui18n::LocalizableFor<UserService, Service>
-//   {
-//   public:
-//       // bundle_root inherited from Service via static-member lookup
-//       static constexpr std::string_view bundle_name = "com/example/UserServiceBundle";
-//   };
+// bundle_root for Self's own bundle is resolved via static-member lookup
+// starting at Self, so it can be:
+//
+//   a) Omitted — Self inherits Parent::bundle_root.  Use this when Self
+//      lives in the same library as Parent and shares its bundle directory.
+//
+//      class UserService : public icui18n::LocalizableFor<UserService, Service>
+//      {
+//      public:
+//          // bundle_root inherited from Service
+//          static constexpr std::string_view bundle_name = "com/example/UserServiceBundle";
+//      };
+//
+//   b) Redeclared — Self supplies its own bundle_root.  Use this when Self
+//      lives in a different library and must store its bundles under its own
+//      install path, independent of Parent's library.
+//
+//      class ExtService : public icui18n::LocalizableFor<ExtService, Service>
+//      {
+//      public:
+//          static constexpr std::string_view bundle_root = "/usr/lib/ext/i18n";
+//          static constexpr std::string_view bundle_name = "com/ext/ExtServiceBundle";
+//      };
 
 template<typename Self, typename Parent>
     requires IsLocalizable<Parent>

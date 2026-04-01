@@ -16,8 +16,15 @@ concept HasBundleName = requires
 };
 
 // Satisfied when T declares:  static constexpr std::string_view bundle_root
-// Derived classes that do not redeclare bundle_root inherit it from their
-// base class via normal static-member lookup.
+//
+// bundle_root controls where ICU looks for the compiled .res files for T's
+// own bundle.  Each class in a LocalizableFor hierarchy may declare its own
+// bundle_root independently; classes that do not redeclare it inherit the
+// value from their base class via normal static-member lookup.
+//
+// Cross-library subclasses should always redeclare bundle_root so their
+// bundles are stored under their own library's install path rather than the
+// parent library's path.
 template<typename T>
 concept HasBundleRoot = requires
 {
