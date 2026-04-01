@@ -2,3 +2,4 @@ build/
 Release/
 *.res
 CLAUDE.md
+.DS_Store
