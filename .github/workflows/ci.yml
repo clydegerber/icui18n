@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags:     ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Build and test ───────────────────────────────────────────────────────────
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux / GCC
+            os: ubuntu-24.04
+            cc: gcc
+            cxx: g++
+
+          - name: Linux / Clang
+            os: ubuntu-24.04
+            cc: clang
+            cxx: clang++
+
+          - name: Linux / ASan + UBSan
+            os: ubuntu-24.04
+            cc: clang
+            cxx: clang++
+            extra_flags: -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+          - name: Linux / TSan
+            os: ubuntu-24.04
+            cc: clang
+            cxx: clang++
+            extra_flags: -DCMAKE_CXX_FLAGS="-fsanitize=thread" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+
+          - name: macOS / AppleClang
+            os: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ICU (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libicu-dev icu-devtools
+
+      - name: Install ICU (macOS)
+        if: runner.os == 'macOS'
+        run: brew install icu4c
+
+      - name: Configure (Linux)
+        if: runner.os == 'Linux'
+        env:
+          CC:  ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: cmake -B build ${{ matrix.extra_flags }}
+
+      - name: Configure (macOS)
+        if: runner.os == 'macOS'
+        run: cmake -B build -DICU_ROOT=$(brew --prefix icu4c)
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # ── Create GitHub Release on version tag ─────────────────────────────────────
+  release:
+    name: Create release
+    runs-on: ubuntu-24.04
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes

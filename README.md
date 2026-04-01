@@ -1,5 +1,7 @@
 # icui18n
 
+[![CI](https://github.com/YOUR_USERNAME/icui18n/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/icui18n/actions/workflows/ci.yml)
+
 A C++20 library that layers polymorphic resource inheritance and locale-change events on top of ICU's `ResourceBundle` API.
 
 ## Features
@@ -16,12 +18,49 @@ A C++20 library that layers polymorphic resource inheritance and locale-change e
 - [ICU4C](https://icu.unicode.org) (tested with ICU 78)
 - CMake 3.21+
 
-## Building
+## Integration
+
+The recommended way to consume icui18n is via CMake's built-in `FetchContent` module. Add the following to your project's `CMakeLists.txt` **before** any `target_link_libraries` calls that reference `icui18n::icui18n`:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+    icui18n
+    GIT_REPOSITORY https://github.com/YOUR_USERNAME/icui18n.git
+    GIT_TAG        v1.0.0
+)
+FetchContent_MakeAvailable(icui18n)
+```
+
+Then link to your target as usual:
+
+```cmake
+target_link_libraries(my_target PRIVATE icui18n::icui18n)
+```
+
+`FetchContent_MakeAvailable` downloads the source at configure time, builds it as part of your project, and makes the `icui18n::icui18n` target available immediately — no separate install step is required.
+
+**ICU must be installed on the build machine.** `FetchContent` pulls in icui18n's `CMakeLists.txt`, which calls `find_package(ICU REQUIRED)`. If ICU is not on the default search path, set `ICU_ROOT` before or alongside the `FetchContent_Declare` call:
+
+```cmake
+set(ICU_ROOT /opt/homebrew/opt/icu4c)   # example: keg-only Homebrew install
+```
+
+## Building from source
 
 ```bash
 cmake -B build -DICU_ROOT=/path/to/icu   # omit ICU_ROOT if ICU is on the system path
 cmake --build build
 ctest --test-dir build --output-on-failure
+```
+
+To install to a prefix (required for `find_package(icui18n)` without FetchContent):
+
+```bash
+cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local
+cmake --build build
+cmake --install build
 ```
 
 ## Quick Start
@@ -166,3 +205,7 @@ If you link the static archive directly (rather than the shared library), define
 ```cmake
 target_compile_definitions(my_target PRIVATE ICUI18N_STATIC_DEFINE)
 ```
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).

@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(ICU REQUIRED COMPONENTS uc i18n)
+
+include("${CMAKE_CURRENT_LIST_DIR}/icui18nTargets.cmake")
+
+check_required_components(icui18n)
